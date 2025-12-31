@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: ohgun-monolithic
+
+  # Neon PostgreSQL Database Configuration
+  datasource:
+    url: jdbc:postgresql://${NEON_DB_HOST:ep-calm-credit-alrnsip1-pooler.ap-southeast-1.aws.neon.tech}:5432/${NEON_DB_NAME:neondb}?sslmode=require
+    username: ${NEON_DB_USER:neondb_owner}
+    password: ${NEON_DB_PASSWORD:npg_kDZv9cRNij8A}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+
+  # Upstash Redis Configuration
+  data:
+    redis:
+      host: ${UPSTASH_REDIS_HOST}
+      port: ${UPSTASH_REDIS_PORT}
+      password: ${UPSTASH_REDIS_PASSWORD}
+      ssl:
+        enabled: true
+      timeout: 2000ms
+
+server:
+  port: 8080
+
+# OAuth Configuration
+oauth:
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
+    redirect-uri: ${NAVER_REDIRECT_URI}
+    authorize-url: https://nid.naver.com/oauth2.0/authorize
+    token-url: https://nid.naver.com/oauth2.0/token
+    user-info-url: https://openapi.naver.com/v1/nid/me
+  frontend:
+    redirect-url: ${OAUTH_FRONTEND_REDIRECT_URL}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-in-seconds: ${JWT_EXPIRATION}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_EXPIRATION}
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    doc-expansion: none
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    site.ohgun.api: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+

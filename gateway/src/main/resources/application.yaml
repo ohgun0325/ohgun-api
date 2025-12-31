@@ -1,0 +1,555 @@
+spring:
+  application:
+    name: gateway
+  
+  # Redis 연결 설정 (논블로킹)
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      # SSL 설정 (Upstash 사용 시 필수)
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+      # Lettuce 드라이버는 기본적으로 Reactive 지원
+  
+  # WebFlux 튜닝
+  webflux:
+    codec:
+      max-in-memory-size: 10MB
+  
+  cloud:
+    gateway:
+      # ============================================
+      # Configuration Notes:
+      # - CORS: Configured in YAML (globalcors)
+      # - Swagger Redirect: Configured in YAML (route below)
+      # - Logging: Configured in YAML (logging section)
+      # - Rate Limiter Key Resolver: Defined in GatewayApplication.java
+      #   - Referenced as: key-resolver: "#{@ipKeyResolver}"
+      # - Circuit Breaker: Uses default error responses (no custom fallback)
+      # ============================================
+      
+      # HTTP Client 타임아웃 설정 (전처리 작업이 오래 걸릴 수 있음)
+      httpclient:
+        connect-timeout: 10000  # 연결 타임아웃: 10초
+        response-timeout: 600s  # 응답 타임아웃: 10분 (전처리 작업용)
+      
+      # Global CORS Configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: "*"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+            exposed-headers:
+              - Authorization
+              - Content-Type
+      
+      routes:
+        # Swagger UI Redirect Route
+        # Note: This route redirects /docs to /swagger-ui.html
+        # The SwaggerController.java has been removed and replaced with this route
+        - id: swagger-redirect
+          uri: http://localhost:8080/swagger-ui.html
+          predicates:
+            - Path=/docs
+          filters:
+            - RewritePath=/docs, /swagger-ui.html
+        
+        # OpenAPI Docs Proxy Routes (for Swagger UI aggregation)
+        - id: user-api-docs
+          uri: http://user:8080
+          predicates:
+            - Path=/api-docs/user
+          filters:
+            - RewritePath=/api-docs/user, /v3/api-docs
+        
+        - id: common-api-docs
+          uri: http://common:8080
+          predicates:
+            - Path=/api-docs/common
+          filters:
+            - RewritePath=/api-docs/common, /v3/api-docs
+        
+        - id: environment-api-docs
+          uri: http://environment:8080
+          predicates:
+            - Path=/api-docs/environment
+          filters:
+            - RewritePath=/api-docs/environment, /v3/api-docs
+        
+        - id: social-api-docs
+          uri: http://social:8080
+          predicates:
+            - Path=/api-docs/social
+          filters:
+            - RewritePath=/api-docs/social, /v3/api-docs
+        
+        - id: governance-api-docs
+          uri: http://governance:8080
+          predicates:
+            - Path=/api-docs/governance
+          filters:
+            - RewritePath=/api-docs/governance, /v3/api-docs
+        
+        - id: oauth-api-docs
+          uri: http://oauth:8080
+          predicates:
+            - Path=/api-docs/oauth
+          filters:
+            - RewritePath=/api-docs/oauth, /v3/api-docs
+        
+        # User Service - Rate Limiting + Circuit Breaker
+        - id: user-service
+          uri: http://user:8080
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 50
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: userCircuitBreaker
+        
+        # Common Service - Rate Limiting + Circuit Breaker
+        - id: common-service
+          uri: http://common:8080
+          predicates:
+            - Path=/api/common/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: commonCircuitBreaker
+        
+        # Environment Service - Rate Limiting + Circuit Breaker
+        - id: environment-service
+          uri: http://environment:8080
+          predicates:
+            - Path=/api/environment/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: environmentCircuitBreaker
+        
+        # Social Service - Rate Limiting + Circuit Breaker
+        - id: social-service
+          uri: http://social:8080
+          predicates:
+            - Path=/api/social/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: socialCircuitBreaker
+        
+        # Governance Service - Rate Limiting + Circuit Breaker
+        - id: governance-service
+          uri: http://governance:8080
+          predicates:
+            - Path=/api/governance/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: governanceCircuitBreaker
+        
+        # OAuth Service - Direct Route (no /api prefix)
+        # 네이버 콜백: http://localhost:8080/oauth/naver/callback
+        - id: oauth-service-direct
+          uri: http://oauth:8080
+          predicates:
+            - Path=/oauth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 50
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: oauthCircuitBreaker
+        
+        # OAuth Service - API prefix route (for /api/oauth/**)
+        # 네이버 콜백: http://localhost:8080/api/oauth/naver/callback
+        - id: oauth-service-api
+          uri: http://oauth:8080
+          predicates:
+            - Path=/api/oauth/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 50
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: oauthCircuitBreaker
+        
+        # ========================================
+        # FastAPI Services (AI/ML)
+        # ========================================
+        
+        # Crawler Service - Rate Limiting + Circuit Breaker
+        - id: crawler-service
+          uri: http://crawler-service:9001
+          predicates:
+            - Path=/api/crawler/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: crawlerCircuitBreaker
+        
+        # Chatbot Service - Rate Limiting + Circuit Breaker
+        - id: chatbot-service
+          uri: http://chatbot-service:9002
+          predicates:
+            - Path=/api/chatbot/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: chatbotCircuitBreaker
+        
+        # Transformer Service (KoELECTRA Sentiment)
+        - id: transformer-service
+          uri: http://transformer-service:9004
+          predicates:
+            - Path=/api/transformer/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 15
+                redis-rate-limiter.burstCapacity: 30
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: transformerCircuitBreaker
+                fallbackUri: forward:/error
+        
+        # Crawler Service - OpenAPI Docs
+        - id: crawler-api-docs
+          uri: http://crawler-service:9001
+          predicates:
+            - Path=/api-docs/crawler
+          filters:
+            - RewritePath=/api-docs/crawler, /openapi.json
+        
+        # Chatbot Service - OpenAPI Docs
+        - id: chatbot-api-docs
+          uri: http://chatbot-service:9002
+          predicates:
+            - Path=/api-docs/chatbot
+          filters:
+            - RewritePath=/api-docs/chatbot, /openapi.json
+        
+        # Transformer Service - OpenAPI Docs
+        - id: transformer-api-docs
+          uri: http://transformer-service:9004
+          predicates:
+            - Path=/api-docs/transformer
+          filters:
+            - RewritePath=/api-docs/transformer, /openapi.json
+        
+        # ML Service - Titanic - Rate Limiting + Circuit Breaker
+        # 전처리 작업이 오래 걸릴 수 있으므로 타임아웃은 전역 httpclient 설정 사용
+        - id: mlsservice-titanic
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api/titanic/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: mlsCircuitBreaker
+                fallbackUri: forward:/error
+          metadata:
+            response-timeout: 600000  # 10분 (밀리초)
+            connect-timeout: 30000    # 30초 (밀리초)
+        
+        # ML Service - Seoul Crime - Rate Limiting + Circuit Breaker
+        - id: mlsservice-seoul
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api/ml/seoul/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: mlsCircuitBreaker
+                fallbackUri: forward:/error
+          metadata:
+            response-timeout: 600000  # 10분 (밀리초)
+            connect-timeout: 30000    # 30초 (밀리초)
+        
+        # ML Service - NLP - Rate Limiting + Circuit Breaker
+        - id: mlsservice-nlp
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api/ml/nlp/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: mlsCircuitBreaker
+                fallbackUri: forward:/error
+          metadata:
+            response-timeout: 600000  # 10분 (밀리초)
+            connect-timeout: 30000    # 30초 (밀리초)
+
+        # ML Service - USA Unemployment - Rate Limiting + Circuit Breaker
+        - id: mlsservice-usa
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api/ml/usa/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: mlsCircuitBreaker
+                fallbackUri: forward:/error
+          metadata:
+            response-timeout: 600000  # 10분 (밀리초)
+            connect-timeout: 30000    # 30초 (밀리초)
+        
+        # ML Service - OpenAPI Docs - Titanic
+        - id: mls-api-docs-titanic
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api-docs/titanic
+          filters:
+            - RewritePath=/api-docs/titanic, /openapi.json
+        
+        # ML Service - OpenAPI Docs - Seoul
+        - id: mls-api-docs-seoul
+          uri: http://mlsservice:9004
+          predicates:
+            - Path=/api-docs/ml/seoul
+          filters:
+            - RewritePath=/api-docs/ml/seoul, /openapi.json
+
+# Resilience4j Circuit Breaker 설정
+resilience4j:
+  timelimiter:
+    instances:
+      mlsCircuitBreaker:
+        timeout-duration: 600s        # 10분
+        cancel-running-future: false  # 실행 중 작업 취소 안 함
+  circuitbreaker:
+    instances:
+      userCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      commonCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      environmentCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      socialCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      governanceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      oauthCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      crawlerCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      chatbotCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      transformerCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      mlsCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+# Actuator 설정 (모니터링)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# SpringDoc OpenAPI 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    groups:
+      enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    urls:
+      - url: /v3/api-docs
+        name: Gateway
+      - url: /api-docs/user
+        name: User Service
+      - url: /api-docs/common
+        name: Common Service
+      - url: /api-docs/environment
+        name: Environment Service
+      - url: /api-docs/social
+        name: Social Service
+      - url: /api-docs/governance
+        name: Governance Service
+      - url: /api-docs/oauth
+        name: OAuth Service
+      - url: /api-docs/crawler
+        name: Crawler Service (FastAPI)
+      - url: /api-docs/chatbot
+        name: Chatbot Service (FastAPI)
+      - url: /api-docs/transformer
+        name: Transformer Service (FastAPI)
+    # Redirect /docs to swagger-ui.html (handled by route above)
+
+# Netty 서버 튜닝 (기본값이 최적이므로 주석 처리)
+server:
+  port: 8080
+  # netty:
+  #   connection-timeout: 45000
+
+# ============================================
+# Logging Configuration
+# 
+# Gateway provides built-in request/response logging via DEBUG level.
+# The LoggingFilter.java has been removed and replaced with Gateway's
+# built-in logging configured here.
+# ============================================
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway.filter: DEBUG
+    org.springframework.web: INFO
+    reactor.netty: INFO
+    reactor.netty.http: DEBUG
+    site.ohgun.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
