@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:  # 수동 실행 가능하도록 추가
 
 env:
   DOCKER_IMAGE_NAME: ohgun0325/ohgun-api
@@ -68,8 +69,30 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 작업 디렉토리로 이동
+            # 작업 디렉토리 생성 (없으면 생성)
+            sudo mkdir -p /opt/ohgun-api
+            sudo chown $USER:$USER /opt/ohgun-api
             cd /opt/ohgun-api
+            
+            # .env 파일 생성 또는 업데이트 (GitHub Secret에서 읽어서)
+            if [ -n "${{ secrets.EC2_ENV_FILE }}" ]; then
+              echo "=== .env 파일 생성/업데이트 ==="
+              echo "${{ secrets.EC2_ENV_FILE }}" > .env
+              chmod 600 .env
+              echo "✓ .env 파일이 생성되었습니다."
+            elif [ -f .env ]; then
+              echo "✓ .env 파일이 이미 존재합니다. (기존 파일 사용)"
+            else
+              echo "⚠️ 경고: .env 파일이 없고 EC2_ENV_FILE Secret도 설정되지 않았습니다."
+              echo "다음 중 하나를 수행하세요:"
+              echo "1. GitHub Secrets에 EC2_ENV_FILE을 추가하거나"
+              echo "2. EC2에 SSH 접속하여 수동으로 .env 파일을 생성하세요."
+              echo ""
+              echo "EC2에 SSH 접속 후:"
+              echo "  cd /opt/ohgun-api"
+              echo "  vim .env"
+              exit 1
+            fi
             
             # 기존 컨테이너 중지 및 제거
             docker stop ohgun-api || true
@@ -79,6 +102,7 @@ jobs:
             docker pull ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
             
             # 새 컨테이너 실행
+            echo "=== 컨테이너 실행 ==="
             docker run -d \
               --name ohgun-api \
               -p 8080:8080 \
@@ -91,8 +115,10 @@ jobs:
             
             # 컨테이너 상태 확인
             echo "=== 컨테이너 상태 ==="
-            docker ps -a | grep ohgun-api
+            docker ps -a | grep ohgun-api || echo "컨테이너가 실행되지 않았습니다."
             
             # 컨테이너 로그 확인 (최근 20줄)
-            echo "=== 최근 로그 ==="
-            docker logs --tail 20 ohgun-api
+            if docker ps | grep -q ohgun-api; then
+              echo "=== 최근 로그 ==="
+              docker logs --tail 20 ohgun-api
+            fi
