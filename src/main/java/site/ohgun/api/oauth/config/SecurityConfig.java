@@ -48,7 +48,11 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:3002",
                 "http://127.0.0.1:3000",
-                "http://127.0.0.1:3002"
+                "http://127.0.0.1:3002",
+                "https://www.ohgun.kr",        // Vercel 프로덕션 도메인
+                "https://admin.ohgun.kr"       // Admin 사이트 (필요시)
+                // Vercel 프리뷰 도메인은 배포 후 실제 URL을 추가해야 함
+                // 예: "https://your-project-git-branch.vercel.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
