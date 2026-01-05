@@ -1,0 +1,32 @@
+spring:
+  # ========================================
+  # 로컬 PostgreSQL Database Configuration
+  # ========================================
+  datasource:
+    url: jdbc:postgresql://${NEON_DB_HOST:localhost}:5432/${NEON_DB_NAME:ohgun}
+    username: ${NEON_DB_USER:ohgun}
+    password: ${NEON_DB_PASSWORD:ohgun1234}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+
+  # ========================================
+  # 로컬 Redis Configuration (SSL 비활성화)
+  # ========================================
+  data:
+    redis:
+      host: ${UPSTASH_REDIS_HOST:localhost}
+      port: ${UPSTASH_REDIS_PORT:6379}
+      password: ${UPSTASH_REDIS_PASSWORD:redis1234}
+      ssl:
+        enabled: false
+      timeout: 2000ms
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+

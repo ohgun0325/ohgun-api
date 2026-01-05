@@ -1,0 +1,51 @@
+services:
+  # ========================================
+  # Spring Boot Application
+  # ========================================
+  api:
+    image: ${DOCKER_IMAGE_NAME:-ohgun0325/ohgun-api}:${DOCKER_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ohgun-api
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    env_file:
+      - ../.env
+    environment:
+      # Spring Profile (기본값 사용, application.yaml의 기본 설정 적용)
+      # SPRING_PROFILES_ACTIVE을 설정하지 않으면 application.yaml의 기본값 사용
+
+      # Neon PostgreSQL Database Configuration
+      # application.yaml의 기본값 사용:
+      # - NEON_DB_HOST: ep-calm-credit-alrnsip1-pooler.ap-southeast-1.aws.neon.tech
+      # - NEON_DB_NAME: neondb
+      # - NEON_DB_USER: neondb_owner
+      # - NEON_DB_PASSWORD: npg_kDZv9cRNij8A
+      # 환경 변수로 오버라이드하려면 아래 주석을 해제하고 설정하세요:
+      # NEON_DB_HOST: ${NEON_DB_HOST}
+      # NEON_DB_NAME: ${NEON_DB_NAME}
+      # NEON_DB_USER: ${NEON_DB_USER}
+      # NEON_DB_PASSWORD: ${NEON_DB_PASSWORD}
+
+      # Upstash Redis Configuration (필수 환경 변수)
+      # .env 파일에서 읽어오거나, 아래 기본값 사용
+      UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST:-awaited-insect-5667.upstash.io}
+      UPSTASH_REDIS_PORT: ${UPSTASH_REDIS_PORT:-6379}
+      UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD:-ARYjAAImcDIyYTNkMDE3YjJlYjA0MDVjODRjYTE5NWRjZmRmMDZlNXAyNTY2Nw}
+
+      # JPA Configuration
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL:-false}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-min-256-bits}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000}
+
+      # OAuth Naver Configuration
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      NAVER_REDIRECT_URI: ${NAVER_REDIRECT_URI:-http://localhost:8080/oauth/naver/callback}
+      OAUTH_FRONTEND_REDIRECT_URL: ${OAUTH_FRONTEND_REDIRECT_URL:-http://localhost:3000}
+    restart: unless-stopped
