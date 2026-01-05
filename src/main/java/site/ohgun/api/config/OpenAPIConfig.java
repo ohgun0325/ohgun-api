@@ -17,39 +17,39 @@ public class OpenAPIConfig {
                         .title("OHGUN API Gateway")
                         .version("1.0.0")
                         .description("""
-                                # OHGUN ???? API ??
+                                # OHGUN Monolithic API Documentation
                                 
-                                ## ?? ??
+                                ## Features
                                 
-                                - **OAuth ??**: ??? ?? ??? ??
-                                - **JWT ?? ??**: Access Token ? Refresh Token ??
-                                - **??? ??**: ??? ?? ?? ? ??
-                                - **API ??**: ?? ???? ??? ?????? ??
+                                - **OAuth Integration**: Social login and authentication
+                                - **JWT Token Management**: Access Token and Refresh Token support
+                                - **User Management**: User registration and profile management
+                                - **API Gateway**: Centralized API endpoint management
                                 
-                                ## ?? ??? ???
+                                ## Service Endpoints
                                 
-                                - **OAuth Service**: ??? ???(`/oauth/naver/**`)
-                                - **User Service**: ??? ??(???)
-                                - **Common Service**: ?? ?? (???)
-                                - **Environment Service**: ?? ??(???)
-                                - **Social Service**: ?? ?? (???)
-                                - **Governance Service**: ???? ?? (???)
+                                - **OAuth Service**: Social authentication (`/oauth/naver/**`)
+                                - **User Service**: User management (CRUD)
+                                - **Common Service**: Common utilities (Utilities)
+                                - **Environment Service**: Environment configuration (Config)
+                                - **Social Service**: Social features (Social)
+                                - **Governance Service**: System governance (Admin)
                                 
-                                ## AI/ML ???(?? ???????)
+                                ## AI/ML Services (Microservices)
                                 
-                                - **Crawler Service**: ? ???(`http://localhost:9001`)
-                                - **Chatbot Service**: ?? ???(`http://localhost:9002`)
-                                - **MLS Service**: ???? ???(`http://localhost:9004`)
-                                - **Transformer Service**: KoELECTRA ???? (`http://localhost:9005`)
+                                - **Crawler Service**: Web crawling (`http://localhost:9001`)
+                                - **Chatbot Service**: Chat bot service (`http://localhost:9002`)
+                                - **MLS Service**: Machine learning service (`http://localhost:9004`)
+                                - **Transformer Service**: KoELECTRA model service (`http://localhost:9005`)
                                 
-                                ## ?? ??
+                                ## Quick Start
                                 
-                                ### ??? ??? URL ??
+                                ### Get OAuth Login URL
                                 ```bash
                                 GET http://localhost:8080/oauth/naver/login-url
                                 ```
                                 
-                                ### ??? ??? ??
+                                ### OAuth Callback
                                 ```bash
                                 GET http://localhost:8080/oauth/naver/callback?code={code}&state={state}
                                 ```
