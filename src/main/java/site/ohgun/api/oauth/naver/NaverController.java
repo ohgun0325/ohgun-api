@@ -32,7 +32,7 @@ public class NaverController {
     public ResponseEntity<Map<String, String>> getLoginUrl() {
         String state = UUID.randomUUID().toString();
         String url = naverService.buildAuthorizeUrl(state);
-        // TODO: state??Redis ?±Ï????Ä?•Ìï¥??CSRF Î∞©Ï?
+        // TODO: state? Redis? ???? CSRF ?? ??
         return ResponseEntity.ok(Map.of("url", url, "state", state));
     }
 
@@ -42,37 +42,37 @@ public class NaverController {
             @RequestParam String state
     ) {
         try {
-            // 1. ?§Ïù¥Î≤??†ÌÅ∞ ÍµêÌôò
+            // 1. ??? ?? ??
             NaverTokenResponse tokenResponse = naverService.exchangeToken(code, state);
             if (tokenResponse == null || tokenResponse.getAccessToken() == null) {
-                throw new RuntimeException("?§Ïù¥Î≤??†ÌÅ∞ ÍµêÌôò ?§Ìå®");
+                throw new RuntimeException("??? ?? ?? ??");
             }
 
-            // 2. ?¨Ïö©???ïÎ≥¥ Ï°∞Ìöå
+            // 2. ??? ?? ??
             NaverUserInfo userInfo = naverService.fetchUserInfo(tokenResponse.getAccessToken());
             if (userInfo == null || userInfo.getId() == null) {
-                throw new RuntimeException("?¨Ïö©???ïÎ≥¥ Ï°∞Ìöå ?§Ìå®");
+                throw new RuntimeException("??? ?? ?? ??");
             }
 
-            // 3. JWT ?†ÌÅ∞ ?ùÏÑ±
+            // 3. JWT ?? ??
             String accessToken = jwtTokenProvider.createAccessToken(
                     userInfo.getId(),
-                    Map.of("email", userInfo.getEmail() != null ? userInfo.getEmail() : "", 
+                    Map.of("email", userInfo.getEmail() != null ? userInfo.getEmail() : "",
                            "name", userInfo.getName() != null ? userInfo.getName() : "")
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(
                     userInfo.getId(),
-                    Map.of("email", userInfo.getEmail() != null ? userInfo.getEmail() : "", 
+                    Map.of("email", userInfo.getEmail() != null ? userInfo.getEmail() : "",
                            "name", userInfo.getName() != null ? userInfo.getName() : "")
             );
 
-            // 4. ?ëÎãµ Í∞ùÏ≤¥ ?ùÏÑ±
+            // 4. ??? ?? ??
             OAuthLoginResponse.UserInfo userInfoDto = OAuthLoginResponse.UserInfo.builder()
                     .id(userInfo.getId())
                     .email(userInfo.getEmail())
                     .nickname(userInfo.getNickname())
                     .name(userInfo.getName())
-                    .profileImage(null) // ?§Ïù¥Î≤?API?êÏÑú ?ÑÎ°ú???¥Î?ÏßÄ ?ïÎ≥¥Í∞Ä ?àÏúºÎ©?Ï∂îÍ?
+                    .profileImage(null) // ??? API?? ???? ?? ????? null ??
                     .build();
 
             OAuthLoginResponse response = OAuthLoginResponse.builder()
@@ -82,16 +82,16 @@ public class NaverController {
                     .provider("naver")
                     .build();
 
-            // Î°úÍ∑∏???±Í≥µ Î©îÏãúÏßÄ Ï∂úÎ†•
+            // ??? ?? ?? ??
             System.out.println("========================================");
-            System.out.println("???§Ïù¥Î≤?Î°úÍ∑∏???±Í≥µ!");
-            System.out.println("?¨Ïö©??ID: " + userInfo.getId());
-            System.out.println("?¥Î©î?? " + (userInfo.getEmail() != null ? userInfo.getEmail() : "N/A"));
-            System.out.println("?¥Î¶Ñ: " + (userInfo.getName() != null ? userInfo.getName() : "N/A"));
-            System.out.println("?âÎÑ§?? " + (userInfo.getNickname() != null ? userInfo.getNickname() : "N/A"));
+            System.out.println("??? ??? ??!");
+            System.out.println("??? ID: " + userInfo.getId());
+            System.out.println("???: " + (userInfo.getEmail() != null ? userInfo.getEmail() : "N/A"));
+            System.out.println("??: " + (userInfo.getName() != null ? userInfo.getName() : "N/A"));
+            System.out.println("???: " + (userInfo.getNickname() != null ? userInfo.getNickname() : "N/A"));
             System.out.println("========================================");
 
-            // 5. ?ÑÎ°†?∏Ïóî?úÎ°ú Î¶¨Îã§?¥Î†â??(?†ÌÅ∞??URL ?åÎùºÎØ∏ÌÑ∞Î°??ÑÎã¨)
+            // 5. ?????? ????? (??? URL ?? ????? ??)
             String redirectUrl = UriComponentsBuilder.fromUriString(frontendRedirectUrl)
                     .path("/oauth/callback")
                     .queryParam("accessToken", accessToken)
@@ -105,22 +105,21 @@ public class NaverController {
                     .header("Location", redirectUrl)
                     .build();
         } catch (Exception e) {
-            // ?êÎü¨ Î°úÍπÖ
+            // ?? ??
             System.err.println("OAuth callback error: " + e.getMessage());
             e.printStackTrace();
-            
-            // ?êÎü¨ Î∞úÏÉù ???ÑÎ°†?∏Ïóî?úÎ°ú Î¶¨Îã§?¥Î†â??
+
+            // ?? ?? ? ?????? ?????
             String errorRedirectUrl = UriComponentsBuilder.fromUriString(frontendRedirectUrl)
                     .path("/oauth/error")
-                    .queryParam("error", e.getMessage() != null ? e.getMessage() : "Î°úÍ∑∏??Ï≤òÎ¶¨ Ï§??§Î•òÍ∞Ä Î∞úÏÉù?àÏäµ?àÎã§.")
+                    .queryParam("error", e.getMessage() != null ? e.getMessage() : "??? ?? ? ??? ??????.")
                     .queryParam("provider", "naver")
                     .build()
                     .toUriString();
-            
+
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", errorRedirectUrl)
                     .build();
         }
     }
 }
-

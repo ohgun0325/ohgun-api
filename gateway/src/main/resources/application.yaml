@@ -195,9 +195,10 @@ spring:
                 name: governanceCircuitBreaker
         
         # OAuth Service - Direct Route (no /api prefix)
+        # 모놀리식 애플리케이션의 NaverController 사용
         # 네이버 콜백: http://localhost:8080/oauth/naver/callback
         - id: oauth-service-direct
-          uri: http://oauth:8080
+          uri: http://api:8080  # docker-compose의 api 서비스로 변경
           predicates:
             - Path=/oauth/**
           filters:
@@ -214,7 +215,7 @@ spring:
         # OAuth Service - API prefix route (for /api/oauth/**)
         # 네이버 콜백: http://localhost:8080/api/oauth/naver/callback
         - id: oauth-service-api
-          uri: http://oauth:8080
+          uri: http://api:8080  # docker-compose의 api 서비스로 변경
           predicates:
             - Path=/api/oauth/**
           filters:
