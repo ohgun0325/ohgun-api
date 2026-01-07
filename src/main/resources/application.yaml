@@ -4,9 +4,9 @@ spring:
 
   # Neon PostgreSQL Database Configuration
   datasource:
-    url: jdbc:postgresql://${NEON_DB_HOST:ep-calm-credit-alrnsip1-pooler.ap-southeast-1.aws.neon.tech}:5432/${NEON_DB_NAME:neondb}?sslmode=require
+    url: jdbc:postgresql://${NEON_DB_HOST:ep-dark-violet-a1dtvvt8-pooler.ap-southeast-1.aws.neon.tech}:5432/${NEON_DB_NAME:neondb}?sslmode=require
     username: ${NEON_DB_USER:neondb_owner}
-    password: ${NEON_DB_PASSWORD:npg_kDZv9cRNij8A}
+    password: ${NEON_DB_PASSWORD:npg_1yNpvxl5fRnK}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -42,7 +42,7 @@ oauth:
     token-url: https://nid.naver.com/oauth2.0/token
     user-info-url: https://openapi.naver.com/v1/nid/me
   frontend:
-    redirect-url: ${OAUTH_FRONTEND_REDIRECT_URL}
+    redirect-url: ${OAUTH_FRONTEND_REDIRECT_URL:http://localhost:3000}
 
 # JWT Configuration
 jwt:
