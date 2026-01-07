@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,6 +33,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // OPTIONS 요청은 모든 경로에서 허용 (CORS Preflight)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 공개 엔드포인트 (인증 불필요)
                         .requestMatchers(
                                 "/",
@@ -59,6 +62,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        
+        // 허용할 Origin 목록
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:3002",
@@ -70,10 +75,25 @@ public class SecurityConfig {
                 // Vercel 프리뷰 도메인은 배포 후 실제 URL을 추가해야 함
                 // 예: "https://your-project-git-branch.vercel.app"
         ));
+        
+        // 허용할 HTTP 메서드 (OPTIONS는 Preflight 요청에 필수)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        // 허용할 헤더 (모든 헤더 허용)
         configuration.setAllowedHeaders(List.of("*"));
+        
+        // 인증 정보(쿠키, Authorization 헤더) 허용
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // 클라이언트에서 접근 가능한 응답 헤더
+        configuration.setExposedHeaders(Arrays.asList(
+                "Authorization", 
+                "Content-Type",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"
+        ));
+        
+        // Preflight 요청 캐시 시간 (1시간)
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

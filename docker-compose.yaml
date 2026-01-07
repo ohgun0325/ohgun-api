@@ -30,9 +30,9 @@ services:
 
       # Upstash Redis Configuration (필수 환경 변수)
       # .env 파일에서 읽어오거나, 아래 기본값 사용
-      UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST:-awaited-insect-5667.upstash.io}
+      UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST:-ample-puma-6304.upstash.io}
       UPSTASH_REDIS_PORT: ${UPSTASH_REDIS_PORT:-6379}
-      UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD:-ARYjAAImcDIyYTNkMDE3YjJlYjA0MDVjODRjYTE5NWRjZmRmMDZlNXAyNTY2Nw}
+      UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD:-ARigAAImcDFhNWZ1OTg4M2JjNmI0NTQ1YmRhYmFlMGRjZjkxNWM2YXAxNjMwNA}
 
       # JPA Configuration
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
