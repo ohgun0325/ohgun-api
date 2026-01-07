@@ -20,14 +20,12 @@ spring:
         use_sql_comments: true
 
   # Upstash Redis Configuration
-  data:
-    redis:
-      host: ${UPSTASH_REDIS_HOST}
-      port: ${UPSTASH_REDIS_PORT}
-      password: ${UPSTASH_REDIS_PASSWORD}
-      ssl:
-        enabled: true
-      timeout: 2000ms
+  redis:
+    host: ${UPSTASH_REDIS_HOST}
+    port: ${UPSTASH_REDIS_PORT}
+    password: ${UPSTASH_REDIS_PASSWORD}
+    ssl: true # Upstash 는 TLS(rediss) 필수
+    timeout: 2000ms
 
 server:
   port: 8080
@@ -87,4 +85,3 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
