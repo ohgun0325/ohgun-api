@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
-    private String secret;
-    private long accessTokenValidityInSeconds;
-    private long refreshTokenValidityInSeconds;
+    private String secret = "default-secret-key-change-in-production-min-256-bits";
+    private long accessTokenValidityInSeconds = 86400; // 24시간
+    private long refreshTokenValidityInSeconds = 2592000; // 30일
 }
 

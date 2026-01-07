@@ -20,22 +20,22 @@ public class NaverService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${oauth.naver.client-id}")
+    @Value("${oauth.naver.client-id:}")
     private String clientId;
 
-    @Value("${oauth.naver.client-secret}")
+    @Value("${oauth.naver.client-secret:}")
     private String clientSecret;
 
-    @Value("${oauth.naver.redirect-uri}")
+    @Value("${oauth.naver.redirect-uri:}")
     private String redirectUri;
 
-    @Value("${oauth.naver.authorize-url}")
+    @Value("${oauth.naver.authorize-url:https://nid.naver.com/oauth2.0/authorize}")
     private String authorizeUrl;
 
-    @Value("${oauth.naver.token-url}")
+    @Value("${oauth.naver.token-url:https://nid.naver.com/oauth2.0/token}")
     private String tokenUrl;
 
-    @Value("${oauth.naver.user-info-url}")
+    @Value("${oauth.naver.user-info-url:https://openapi.naver.com/v1/nid/me}")
     private String userInfoUrl;
 
     public String buildAuthorizeUrl(String state) {
