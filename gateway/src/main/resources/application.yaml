@@ -40,7 +40,14 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origin-patterns: "*"
+            allowed-origins:
+              - "http://localhost:3000"
+              - "http://localhost:3002"
+              - "http://127.0.0.1:3000"
+              - "http://127.0.0.1:3002"
+              - "https://ohgun.kr"
+              - "https://www.ohgun.kr"
+              - "https://admin.ohgun.kr"
             allowed-methods:
               - GET
               - POST
@@ -54,6 +61,8 @@ spring:
             exposed-headers:
               - Authorization
               - Content-Type
+              - Access-Control-Allow-Origin
+              - Access-Control-Allow-Credentials
       
       routes:
         # Swagger UI Redirect Route
