@@ -46,16 +46,7 @@ public class NaverService {
                 .queryParam("state", state)
                 .build()
                 .toUriString();
-        
-        // ?”ë²„ê¹…ì„ ?„í•œ ë¡œê·¸
-        System.out.println("========================================");
-        System.out.println("?¤ì´ë²?OAuth ?¸ì¦ URL ?ì„±:");
-        System.out.println("Client ID: " + clientId);
-        System.out.println("Redirect URI: " + redirectUri);
-        System.out.println("State: " + state);
-        System.out.println("Generated URL: " + url);
-        System.out.println("========================================");
-        
+
         return url;
     }
 

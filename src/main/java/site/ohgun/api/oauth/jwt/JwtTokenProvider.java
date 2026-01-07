@@ -29,7 +29,6 @@ public class JwtTokenProvider {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(validitySeconds);
 
-        // claims�?mutable Map?�로 복사 (Map.of()�?만든 immutable Map 처리)
         Map<String, Object> mutableClaims = new HashMap<>(claims);
 
         return Jwts.builder()
