@@ -32,7 +32,6 @@ public class NaverUserInfo {
         private String profileImage;
     }
 
-    // ?�의 메서??
     public String getId() {
         return response != null ? response.getId() : null;
     }

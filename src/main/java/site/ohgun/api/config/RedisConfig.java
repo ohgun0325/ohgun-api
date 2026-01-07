@@ -56,7 +56,7 @@ public class RedisConfig {
         template.setConnectionFactory(connectionFactory);
 
         // String 직렬화 사용 (키/값/해시 모두 문자열 기반)
-        template.setKeySerializer(new StringSerializer());
+        template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new StringRedisSerializer());
